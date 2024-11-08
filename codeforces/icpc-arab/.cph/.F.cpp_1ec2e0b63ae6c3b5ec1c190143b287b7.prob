@@ -1,0 +1,1 @@
+{"name":"Local: F","url":"e:\\Workspace\\CONTEST\\icpc-arab\\F.cpp","tests":[{"id":1729942393937,"input":"3\n1 2 3\n3 1 2\n2 3 1\n","output":"YES\n"},{"id":1729942398974,"input":"4\n1 2 3 4\n1 2 3 4\n1 2 3 4\n1 2 3 4\n","output":"NO\n"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"e:\\Workspace\\CONTEST\\icpc-arab\\F.cpp","group":"local","local":true}

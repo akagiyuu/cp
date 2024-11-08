@@ -1,0 +1,1 @@
+{"name":"Local: k","url":"e:\\Workspace\\CONTEST\\icpc-arab\\k.cpp","tests":[{"id":1729946413044,"input":"3 4\naaab\naabb\nabbc\n5\n1 1\n2 2\n1 2\n2 3\n1 3\n","output":"4\n4\n3\n2\n1\n"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"e:\\Workspace\\CONTEST\\icpc-arab\\k.cpp","group":"local","local":true}

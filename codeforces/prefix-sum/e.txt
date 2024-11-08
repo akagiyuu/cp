@@ -1,0 +1,1 @@
+xét theo đường dùng binary search thay vì xét theo người

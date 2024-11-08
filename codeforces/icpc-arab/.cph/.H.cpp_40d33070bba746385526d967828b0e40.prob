@@ -1,0 +1,1 @@
+{"name":"Local: H","url":"e:\\Workspace\\CONTEST\\icpc-arab\\H.cpp","tests":[{"id":1729942795565,"input":"1\n5\n1 2 3 4 5\n4\n1\n2\n3\n4\n","output":"5\n5\n6\n10\n15\n"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"e:\\Workspace\\CONTEST\\icpc-arab\\H.cpp","group":"local","local":true}

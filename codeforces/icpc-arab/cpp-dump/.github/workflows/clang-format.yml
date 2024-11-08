@@ -1,0 +1,22 @@
+name: Clang-Format
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  schedule:
+    - cron: "0 2 * * 6"
+
+jobs:
+  run-clang-format:
+    name: Run clang-format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run clang-format
+        uses: DoozyX/clang-format-lint-action@v0.16.2
+        with:
+          source: "."
+          clangFormatVersion: 15

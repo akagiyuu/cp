@@ -9,7 +9,6 @@ const ll MOD = 1e7 + 7;
 ll binpow(ll a, ll b)
 {
 	a %= MOD;
-	b %= MOD - 1;
 
 	ll res = 1;
 	while (b) {

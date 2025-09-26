@@ -35,12 +35,10 @@ bool is_contain(Circle &a, double x, double y)
 
 double acos(double x, double y)
 {
-	double norm = sqrt(x * x + y * y);
-	if (norm == 0)
-		return 0;
-	double res = acos(x / norm);
-
-	return y > 0 ? res : 2 * PI - res;
+	double res = atan2(y, x);
+	if (res < 0)
+		res += 2 * PI;
+	return res;
 }
 
 pair<double, double> get_intersect_angle(Circle &coc, Circle &p)
@@ -102,7 +100,7 @@ double sum_overlapping(vector<pair<double, double> > &a)
 	double cur_end = a[0].second;
 	for (ll i = 1; i < n; i++) {
 		if (a[i].first <= cur_end) {
-			cur_end = a[i].second;
+			cur_end = max(cur_end, a[i].second);
 			continue;
 		}
 		ans += cur_end - cur_start;

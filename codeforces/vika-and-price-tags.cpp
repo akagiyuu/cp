@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include <cpp-dump.hpp>
+// #include <cpp-dump.hpp>
 
 using namespace std;
 
@@ -33,9 +33,6 @@ ll count_stepn(vector<ll> &a, vector<ll> &b)
 		for (ll i = 0; i < n; i++) {
 			tie(a[i], b[i]) = make_pair(b[i], abs(a[i] - b[i]));
 		}
-        cpp_dump(res);
-        cpp_dump(a);
-        cpp_dump(b);
 	}
 	return res;
 }
@@ -57,8 +54,13 @@ bool solve()
 	// }
 	// cout << "\n";
 
-	ll r = count_step(a[0], b[0]) % 3;
+	ll start = 0;
+	while (start < n && a[start] == 0 && b[start] == 0)
+		start++;
+	ll r = count_step(a[start], b[start]) % 3;
 	for (ll i = 1; i < n; i++) {
+		if (a[i] == 0 && b[i] == 0)
+			continue;
 		if (count_step(a[i], b[i]) % 3 != r)
 			return false;
 	}
@@ -68,7 +70,7 @@ bool solve()
 
 int main()
 {
-	CPP_DUMP_SET_OPTION(es_style, cpp_dump::types::es_style_t::no_es);
+	// CPP_DUMP_SET_OPTION(es_style, cpp_dump::types::es_style_t::no_es);
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);

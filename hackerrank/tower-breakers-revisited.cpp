@@ -1,75 +1,64 @@
 #include <bits/stdc++.h>
-// #include <cpp-dump.hpp>
+
+#define int long long
 
 using namespace std;
 
-typedef long long ll;
+const int N = 1e6 + 1;
+unordered_set<int> gs[N];
+int g[N];
 
-const ll MOD = 1000000007;
-const ll N = 1e6;
-
-vector<ll> divisors[N + 1];
-
-void build()
+int sum_pw(int n)
 {
-	for (ll i = 1; i <= N; i++) {
-		for (ll j = 2 * i; j <= N; j += i) {
-			divisors[j].push_back(i);
+	int res = 0;
+	for (int i = 2; i * i <= n; i++) {
+		if (n % i != 0)
+			continue;
+		int pw = 0;
+		while (n % i == 0) {
+			n /= i;
+			pw++;
 		}
+		res += pw;
 	}
-}
-
-int mex(set<ll> const &a)
-{
-	int result = 0;
-	while (a.count(result))
-		++result;
-	return result;
-}
-
-ll cal_grunt(ll key, unordered_map<ll, ll> &cache)
-{
-	if (cache.find(key) != cache.end()) {
-		return cache[key];
-	}
-	set<ll> state;
-	state.insert(cal_grunt(1, cache));
-	for (auto d : divisors[key]) {
-		state.insert(cal_grunt(d, cache));
-	}
-	ll res = mex(state);
-	cache[key] = res;
+	if (n > 1)
+		res++;
 	return res;
 }
 
-void solve()
+void build()
 {
-	ll n, x;
-	cin >> n;
-	ll res = 0;
-	for (ll i = 0; i < n; i++) {
-		cin >> x;
-		unordered_map<ll, ll> cache;
-		cache[1] = 0;
-		res ^= cal_grunt(x, cache);
-	}
-	if (res > 0) {
-		cout << "1\n";
-	} else {
-		cout << "2\n";
+	for (int i = 1; i < N; i++) {
+		g[i] = sum_pw(i);
 	}
 }
 
-int main()
+bool solve()
 {
-	// CPP_DUMP_SET_OPTION(es_style, cpp_dump::types::es_style_t::no_es);
+	int n;
+	cin >> n;
+	int res = 0, tmp;
+	while (n--) {
+		cin >> tmp;
+		res ^= g[tmp];
+	}
+	return res != 0;
+}
+
+signed main()
+{
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
 	build();
+
 	int t;
 	cin >> t;
-	while (t--)
-		solve();
+	while (t--) {
+		if (solve())
+			cout << "1\n";
+		else
+			cout << "2\n";
+	}
 }

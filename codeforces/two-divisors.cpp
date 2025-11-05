@@ -1,43 +1,67 @@
 #include <bits/stdc++.h>
 
-typedef long long ll;
-
-const ll MOD = 1000000007;
+#define int long long
 
 using namespace std;
 
-ll gcd(ll a, ll b)
+const int N = 1e7 + 1;
+
+int lp[N];
+vector<int> pr;
+
+void build()
 {
-	while (b > 0) {
-		ll temp = a % b;
-		a = b;
-		b = temp;
+	for (int i = 2; i < N; i++) {
+		if (lp[i] == 0) {
+			lp[i] = i;
+			pr.push_back(i);
+		}
+		for (int j = 0; i * pr[j] < N; j++) {
+			lp[i * pr[j]] = pr[j];
+			if (pr[j] == lp[i])
+				break;
+		}
 	}
-	return a;
 }
 
-ll solve()
+void solve()
 {
-	ll a, b;
-	cin >> a >> b;
-	ll first = max(a, b);
-	ll second = min(a, b);
-	if (first % second == 0) {
-		return first * (first / second);
-	}
-	ll res = first * second / gcd(first, second);
+	int n;
+	cin >> n;
 
-	return res;
+	vector<array<int, 2> > res(n, { -1, 1 });
+	int x;
+	for (int i = 0; i < n; i++) {
+		cin >> x;
+		int j = 0;
+		while (x > 1) {
+			int cur = lp[x];
+			if (j == 0)
+				res[i][j++] = cur;
+			else
+				res[i][j] *= cur;
+			while (x % cur == 0)
+				x /= cur;
+		}
+		if (res[i][j] == 1)
+			res[i] = { -1, -1 };
+	}
+	for (int i = 0; i < n; i++) {
+		cout << res[i][0] << " ";
+	}
+	cout << "\n";
+	for (int i = 0; i < n; i++) {
+		cout << res[i][1] << " ";
+	}
+	cout << "\n";
 }
 
-int main()
+signed main()
 {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int t;
-	cin >> t;
-	while (t--)
-		cout << solve() << "\n";
+	build();
+	solve();
 }

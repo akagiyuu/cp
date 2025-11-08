@@ -7,33 +7,26 @@ using namespace std;
 
 long long gcd(long long a, long long b, long long &x, long long &y)
 {
-	if (b == 0)
-		return x = 1, y = 0, a;
+	if (b == 0) return x = 1, y = 0, a;
 	long long x1, y1;
 	long long g = gcd(b, a % b, x1, y1);
 	x = y1;
 	y = x1 - (a / b) * y1;
 	return g;
 }
-
 pair<long long, long long> crt(const vector<long long> &r, const vector<long long> &m)
 {
 	long long r0 = 0, m0 = 1;
 	for (int i = 0; i < (int)r.size(); i++) {
 		long long r1 = r[i] % m[i], m1 = m[i];
-		if (r1 < 0)
-			r1 += m1;
-
+		if (r1 < 0) r1 += m1;
 		long long x, y;
 		long long g = gcd(m0, m1, x, y);
-		if ((r1 - r0) % g != 0)
-			return { -1, 0 };
-
+		if ((r1 - r0) % g != 0) return { -1, 0 };
 		long long lcm = m0 / g * m1;
 		long long tmp = (r1 - r0) / g % (m1 / g) * x % (m1 / g);
 		r0 = (r0 + m0 * tmp) % lcm;
-		if (r0 < 0)
-			r0 += lcm;
+		if (r0 < 0) r0 += lcm;
 		m0 = lcm;
 	}
 	return { r0, m0 };

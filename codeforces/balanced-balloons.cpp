@@ -4,39 +4,79 @@
 
 using namespace std;
 
+const int MOD = 998244353;
+
 vector<int> cur;
 
-void print(int i, int cur_sum, int n, int k)
+void print(int i, int n, int k)
 {
 	if (i == n) {
-		int s = 0;
-
-		// for (int i = 0; i < n; i++) {
-		// 	cout << cur[i] << " ";
-		// }
 		for (int i = 0; i < n; i++) {
-			s += cur[i];
-			cout << s / (i + 1) << " ";
+			cout << cur[i] << " ";
 		}
+		cout << "\n";
+		cout << cur[0] << " ";
+		for (int i = 1; i < n; i++) {
+			cout << (i + 1) * cur[i] - i * cur[i - 1] << " ";
+		}
+		cout << "\n";
 		cout << "\n";
 		return;
 	}
 
-	for (int j = 1; j <= k; j++) {
-		if ((cur_sum + j) % (i + 1) != 0)
-			continue;
-		cur[i] = j;
-		print(i + 1, cur_sum + j, n, k);
+	int left = 1;
+	int right = k;
+	if (i > 0) {
+		left = (1 + i * cur[i - 1] + i) / (i + 1);
+		right = (k + i * cur[i - 1]) / (i + 1);
 	}
+
+	for (int j = left; j <= right; j++) {
+		cur[i] = j;
+		print(i + 1, n, k);
+	}
+}
+
+int ceil(int x, int y)
+{
+	return (x + y - 1) / y;
+}
+
+int add(int a, int b)
+{
+	int res = a + b;
+	return res > MOD ? res - MOD : res;
+}
+
+int sub(int a, int b)
+{
+	int res = a - b;
+	return res < 0 ? res + MOD : res;
 }
 
 void solve()
 {
 	int n, k;
 	cin >> n >> k;
-	cur.resize(n);
-	print(0, 0, n, k);
-	cout << "\n";
+	vector<int> dp(k + 1, 1);
+	n = min(n, k);
+	dp[0] = 0;
+	for (int i = 2; i <= n; i++) {
+		vector<int> ndp(k + 1, 0);
+		for (int y = 1; y <= k; y++) {
+			int left = max(ceil(i * y - k, i - 1), 0ll);
+			int right = min((i * y - 1) / (i - 1), k);
+			for (int x = left; x <= right; x++) {
+                ndp[y] = add(ndp[y], dp[x]);
+			}
+		}
+		dp = ndp;
+	}
+	int res = 0;
+	for (int i = 1; i <= k; i++) {
+        res = add(res, dp[i]);
+	}
+	cout << res << "\n";
 }
 
 signed main()
@@ -45,8 +85,5 @@ signed main()
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int t;
-	cin >> t;
-	while (t--)
-		solve();
+	solve();
 }

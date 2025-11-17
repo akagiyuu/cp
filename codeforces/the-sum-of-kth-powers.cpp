@@ -1,112 +1,110 @@
 #include <bits/stdc++.h>
 
-typedef long long ll;
-
-const ll MOD = 1000000007;
-const ll N = 1e7;
+#define int long long
 
 using namespace std;
 
-ll pow(ll a, ll b)
+const int MOD = 1e9 + 7;
+
+int add(int a, int b)
 {
-	ll res = 1;
-	while (b > 0) {
-		if (b % 2 == 1) {
-			res *= a;
-			res %= MOD;
-		}
-		a *= a;
-		a %= MOD;
-		b /= 2;
+	int res = a + b;
+	return res < MOD ? res : res - MOD;
+}
+
+int sub(int a, int b)
+{
+	int res = a - b;
+	return res < 0 ? res + MOD : res;
+}
+
+int mul(int a, int b)
+{
+	return a * b % MOD;
+}
+
+int powmod(int a, int b)
+{
+	int res = 1;
+	while (b) {
+		if (b & 1)
+			res = (res * a) % MOD;
+		a = (a * a) % MOD;
+		b >>= 1;
 	}
 	return res;
 }
 
-ll gcd(ll a, ll b, ll &x, ll &y)
+int invmod(int a)
 {
-	ll x1 = 0, y1 = 1;
-	while (b > 0) {
-		ll q = a / b;
-		tie(x, x1) = make_pair(x1, x - q * x1);
-		tie(y, y1) = make_pair(y1, y - q * y1);
-		tie(a, b) = make_pair(b, a - q * b);
-	}
-	return a;
+	return powmod(a, MOD - 2);
 }
 
-ll inverse(ll a)
-{
-	ll x = 1, y = 0;
-	gcd(a, MOD, x, y);
-	return x;
-}
+vector<int> ys, dp;
 
-ll fact[N + 1];
-ll ifact[N + 1];
-
-void build()
+void build_lagrange()
 {
-	fact[0] = 1;
-	for (ll i = 1; i <= N; i++) {
-		fact[i] = fact[i - 1] * i % MOD;
+	int n = ys.size();
+
+	int i, v, f;
+	for (f = 1, i = 1; i < n; i++)
+		f = mul(f, i);
+	v = powmod(f, MOD - 2);
+
+	vector<int> inv(n, v);
+	for (i = n - 1; i > 0; i--) {
+		inv[i - 1] = mul(inv[i], i);
 	}
-	ifact[N] = inverse(fact[N]);
-	for (ll i = N - 1; i >= 0; i--) {
-		ifact[i] = ifact[i + 1] * (i + 1) % MOD;
+
+	dp.resize(n, 1);
+	for (i = 0; i < n; i++) {
+		dp[i] = mul(inv[i], inv[n - i - 1]);
+		dp[i] = mul(dp[i], ys[i]);
 	}
 }
 
-ll lagrange_interpolation(vector<ll> &ys, ll x)
+int interpolate(long long x)
 {
-	ll n = ys.size();
-	if (x < n) {
+	int n = ys.size();
+	if (x < n)
 		return ys[x];
-	}
 
-	vector<ll> prefix(n);
-	prefix[0] = 1;
-	for (ll i = 1; i < n; i++) {
-		prefix[i] = prefix[i - 1] * (x - (i - 1)) % MOD;
-	}
+	int i, w;
+	vector<int> X(n, 1), Y(n, 1);
+	for (i = 1; i < n; i++)
+		X[i] = mul(X[i - 1], (x - i + 1));
 
-	vector<ll> suffix(n);
-	suffix[n - 1] = 1;
-	for (ll i = n - 2; i >= 0; i--) {
-		suffix[i] = suffix[i + 1] * (x - (i + 1)) % MOD;
-	}
+	for (i = n - 2; i >= 0; i--)
+		Y[i] = mul(Y[i + 1], (x - i - 1));
 
-	ll res = 0;
-	for (ll i = 0; i < n; i++) {
-		ll cur = ys[i] % MOD;
-		cur = cur * prefix[i] % MOD;
-		cur = cur * suffix[i] % MOD;
-		cur = cur * ifact[n - i - 1] % MOD;
-		cur = cur * ifact[i] % MOD;
-		if ((n - i + 1) % 2 == 1) {
-			cur = MOD - cur;
-		}
-		cur %= MOD;
-		res = (res + cur) % MOD;
+	int res = 0;
+	for (i = 0; i < n; i++) {
+		w = mul(mul(X[i], Y[i]), dp[i]);
+		if ((n - i + 1) & 1)
+			w = sub(0, w);
+        res = add(res, w);
 	}
-	return (res + MOD) % MOD;
+    return res;
 }
 
 void solve()
 {
-	ll n, k;
+	int n, k;
 	cin >> n >> k;
-	vector<ll> sums(k + 2);
-	ll res = 0;
-	for (ll i = 1; i <= k + 2; i++) {
-		res += pow(i, k);
-		res %= MOD;
-		sums[i - 1] = res;
+    ys.assign(k + 2, 0);
+	for (int i = 1; i < k + 2; i++) {
+		ys[i] = add(powmod(i, k), ys[i - 1]);
 	}
-	cout << lagrange_interpolation(sums, n - 1) << "\n";
+    build_lagrange();
+	int res = interpolate(n);
+	cout << res << "\n";
 }
 
-int main()
+signed main()
 {
-	build();
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	cout.tie(NULL);
+
 	solve();
 }

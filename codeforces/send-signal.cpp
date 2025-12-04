@@ -30,20 +30,7 @@ int solve()
 		b[i] = P(x, y);
 	}
 
-	bool has_greater = true;
-	int cnt = 0;
-
-	auto get_tier = [&](int x) {
-		if (x < d1)
-			return 0;
-		if (x == d1)
-			return 1;
-		if (x < d2)
-			return 2;
-		if (x == d2)
-			return 3;
-		return 4;
-	};
+	vector<double> dist;
 
 	for (int i = 0; i < n - 1; i++) {
 		auto x = a[i] - b[i];
@@ -51,15 +38,23 @@ int solve()
 
 		double A = norm(y), B = 2.0L * dot(x, y), C = norm(x);
 		auto f = [&](double x) { return A * x * x + B * x + C; };
-
-		double l = 0.L;
 		double mid = -B / (2.0L * A);
-		double r = 1.L;
-		if (mid <= l || mid >= r) {
-			continue;
-			double fl = f(l), fr = f(r);
-			auto tl = get_tier(fl), tr = get_tier(fr);
+		dist.push_back(f(0.L));
+		if (0.L < mid && mid < 1.L) {
+			dist.push_back(f(mid));
 		}
+		dist.push_back(f(1.L));
+	}
+
+	bool has_greater = true;
+	int cnt = 0;
+	for (auto d : dist) {
+		if (d <= d1) {
+			cnt += has_greater;
+			has_greater = false;
+		}
+		if (d > d2)
+			has_greater = true;
 	}
 
 	return cnt;

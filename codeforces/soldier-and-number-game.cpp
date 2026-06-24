@@ -5,7 +5,7 @@ using namespace std;
 typedef long long ll;
 
 const ll MOD = 1000000007;
-const ll N = 1e6 + 7;
+const ll N = 5e6 + 7;
 
 ll lp[N], sum[N];
 

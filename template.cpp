@@ -3,15 +3,15 @@
 
 using namespace std;
 
-typedef long long ll;
+#define int long long
 
-const ll MOD = 1000000007;
+const int MOD = 1000000007;
 
 void solve()
 {
 }
 
-int main()
+signed main()
 {
 	CPP_DUMP_SET_OPTION(es_style, cpp_dump::types::es_style_t::no_es);
 	ios_base::sync_with_stdio(false);

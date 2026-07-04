@@ -2,26 +2,30 @@
 
 using namespace std;
 
-typedef long long ll;
+#define int long long
 
-const ll MOD = 1000000007;
+const int MOD = 1000000007;
 
-double solve()
+void solve()
 {
-	double m, n;
+	int m, n;
 	cin >> m >> n;
-	double res = m;
-	for (ll i = 0; i < m; i++) {
-		res -= pow((double)i / m, n);
+	double res = 0;
+	for (int M = 1; M <= m; M++) {
+		double a = (double)M / (double)m;
+		a = pow(a, n);
+		double b = (double)(M - 1) / (double)m;
+		b = pow(b, n);
+		res += (a - b) * (double)M;
 	}
-	return res;
+	cout << setprecision(10) << fixed << res << "\n";
 }
 
-int main()
+signed main()
 {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cout << setprecision(10) << solve() << "\n";
+	solve();
 }

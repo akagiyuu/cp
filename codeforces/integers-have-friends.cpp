@@ -4,74 +4,77 @@ using namespace std;
 
 #define int long long
 
-struct Segtree {
+const int MOD = 1000000007;
+
+struct SegmentTree {
 	int n;
-	vector<int> t;
+	vector<int> tree;
 
-	Segtree(const vector<int> &a)
+	SegmentTree(const vector<int> &a)
 	{
-		n = (int)a.size();
-		t.assign(2 * n, 0);
-		for (int i = 0; i < n; ++i)
-			t[n + i] = a[i];
-		for (int i = n - 1; i > 0; --i)
-			t[i] = gcd(t[i << 1], t[i << 1 | 1]);
+		n = a.size();
+		tree.assign(4 * n, 0);
+		build(1, 0, n - 1, a);
 	}
 
-	void update(int p, int v)
+	void build(int v, int tl, int tr, const vector<int> &a)
 	{
-		p += n;
-		t[p] = v;
-		for (p >>= 1; p > 0; p >>= 1)
-			t[p] = gcd(t[p << 1], t[p << 1 | 1]);
+		if (tl == tr) {
+			tree[v] = a[tl];
+			return;
+		}
+
+		int tmid = (tl + tr) / 2;
+		build(2 * v, tl, tmid, a);
+		build(2 * v + 1, tmid + 1, tr, a);
+		tree[v] = std::gcd(tree[2 * v], tree[2 * v + 1]);
 	}
 
-	int query(int l, int r)
+	int calc(int v, int tl, int tr, int l, int r)
 	{
 		if (l > r)
 			return 0;
-		l += n;
-		r += n + 1;
-		int resL = 0, resR = 0;
-		while (l < r) {
-			if (l & 1)
-				resL = gcd(resL, t[l++]);
-			if (r & 1)
-				resR = gcd(t[--r], resR);
-			l >>= 1;
-			r >>= 1;
-		}
-		return gcd(resL, resR);
+		if (tl == l && tr == r)
+			return tree[v];
+
+		int tmid = (tl + tr) / 2;
+		return std::gcd(calc(2 * v, tl, tmid, l, min(tmid, r)),
+				calc(2 * v + 1, tmid + 1, tr, max(tmid + 1, l), r));
+	}
+
+	int gcd(int l, int r)
+	{
+		return calc(1, 0, n - 1, l, r);
 	}
 };
 
 void solve()
 {
-	int n, tmp;
+	int n;
 	cin >> n;
-	vector<int> a(n - 1);
-	if (n == 1) {
-		cin >> tmp;
+	vector<int> a(n);
+	for (int i = 0; i < n; i++)
+		cin >> a[i];
+	for (int i = 0; i < n - 1; i++) {
+		a[i] = abs(a[i + 1] - a[i]);
+	}
+	a.pop_back();
+	n--;
+	if (a.empty()) {
 		cout << 1 << "\n";
 		return;
 	}
-	cin >> a[0];
-	for (int i = 0; i < n - 1; i++) {
-		cin >> tmp;
-		a[i] = abs(a[i] - tmp);
-		if (i < n - 2)
-			a[i + 1] = tmp;
+
+	SegmentTree s(a);
+
+	int res = 1;
+	int l = 0;
+	for (int r = 0; r < n; r++) {
+		while (l <= r && s.gcd(l, r) == 1)
+			l++;
+		res = max(res, r - l + 2);
 	}
-	n--;
-	Segtree s(a);
-	int best = 1;
-	int L = 0;
-	for (int R = 0; R < n; ++R) {
-		while (L <= R && s.query(L, R) == 1)
-			++L;
-		best = max(best, R - L + 1 + 1);
-	}
-	cout << best << "\n";
+	cout << res << "\n";
 }
 
 signed main()

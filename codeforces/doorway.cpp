@@ -9,69 +9,6 @@ using namespace std;
 
 const int MOD = 1000000007;
 
-struct SegmentTree {
-	int n;
-	vector<int> tree;
-
-	SegmentTree(const vector<int> &a)
-	{
-		n = a.size();
-		tree.assign(4 * n, LLONG_MAX);
-		build(1, 0, n - 1, a);
-	}
-
-	void build(int v, int tl, int tr, const vector<int> &a)
-	{
-		if (tl == tr) {
-			tree[v] = a[tl];
-			return;
-		}
-
-		int tmid = (tl + tr) / 2;
-		build(2 * v, tl, tmid, a);
-		build(2 * v + 1, tmid + 1, tr, a);
-		tree[v] = min(tree[2 * v], tree[2 * v + 1]);
-	}
-
-	int _calc(int v, int tl, int tr, int l, int r)
-	{
-		if (tl == l && tr == r) {
-			return tree[v];
-		}
-
-		int tmid = (tl + tr) / 2;
-
-		int a = _calc(2 * v, tl, tmid, l, min(r, tmid));
-		int b = _calc(2 * v + 1, tmid + 1, tr, max(tmid + 1, l), r);
-		return min(a, b);
-	}
-
-	int calc(int l, int r)
-	{
-		return _calc(1, 0, n - 1, l, r);
-	}
-
-	void _update(int v, int tl, int tr, int i, int value)
-	{
-		if (i < tl || i > tr)
-			return;
-		if (tl == tr) {
-			tree[v] = value;
-			return;
-		}
-
-		int tmid = (tl + tr) / 2;
-		_update(2 * v, tl, tmid, i, value);
-		_update(2 * v + 1, tmid + 1, tr, i, value);
-		tree[v] = min(tree[2 * v], tree[2 * v + 1]);
-	}
-
-	void update(int i, int value)
-	{
-		_update(1, 0, n - 1, i, value);
-	}
-};
-
 void solve()
 {
 	int n;
@@ -88,6 +25,7 @@ void solve()
 
 	vector<pi> lefts;
 	vector<int> sums(n), rights(n);
+	multiset<int> right_set;
 	for (int i = 0; i < n; i++) {
 		int s = wall_ls[i];
 		for (auto d : doors[i]) {
@@ -97,6 +35,7 @@ void solve()
 		lefts.push_back({ i, s });
 		sums[i] = s - wall_ls[i];
 		rights[i] = wall_rs[i] - sums[i];
+		right_set.insert(rights[i]);
 		// cout << rights[i] << " ";
 	}
 	// cout << "\n";
@@ -105,14 +44,14 @@ void solve()
 	// 	cout << "{ " << i << ", " << l << " }\n";
 	// }
 
-	SegmentTree rs(rights);
-
 	vector<bool> contain(n, false);
 	int missing = n;
 	int k = 0;
 	while (missing > 0) {
 		auto [i, l] = lefts[k];
-		rs.update(i, wall_rs[i] - sums[i] + l - wall_ls[i]);
+		right_set.erase(right_set.find(rights[i]));
+		rights[i] = wall_rs[i] - sums[i] + l - wall_ls[i];
+		right_set.insert(rights[i]);
 		// cout << i << " " << l << rs.calc(0, n - 1) << "\n";
 
 		if (!contain[i])
@@ -121,13 +60,15 @@ void solve()
 		k++;
 	}
 
-	int res = max(0ll, rs.calc(0, n - 1) - lefts[k - 1].se);
+	int res = max(0ll, *right_set.begin() - lefts[k - 1].se);
 	int m = lefts.size();
 	for (; k < m; k++) {
 		auto [i, l] = lefts[k];
 		// cout << i << " " << l << rs.calc(0, n - 1) << "\n";
-		rs.update(i, wall_rs[i] - sums[i] + l - wall_ls[i]);
-		res = max(res, rs.calc(0, n - 1) - l);
+		right_set.erase(right_set.find(rights[i]));
+		rights[i] = wall_rs[i] - sums[i] + l - wall_ls[i];
+		right_set.insert(rights[i]);
+		res = max(res, *right_set.begin() - l);
 	}
 
 	cout << res << "\n";

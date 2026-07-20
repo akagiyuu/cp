@@ -20,11 +20,11 @@ struct DSU {
 		sz.assign(n, 1);
 	}
 
-	int find(int x) const
+	int find(int x)
 	{
-		while (x != parent[x])
-			x = parent[x];
-		return x;
+		if (parent[x] == x)
+			return x;
+		return parent[x] = find(parent[x]);
 	}
 
 	bool unite(int a, int b)

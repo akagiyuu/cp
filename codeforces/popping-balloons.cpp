@@ -51,7 +51,7 @@ struct SegmentTree {
 	}
 };
 
-void solve()
+pair<bool, vector<int> > solve()
 {
 	int n, m;
 	cin >> n >> m;
@@ -61,82 +61,49 @@ void solve()
 		cin >> a[i];
 	for (int i = 0; i < n; i++)
 		cin >> b[i];
+	if (a[0] > m) {
+		return { false, {} };
+	}
 
-	SegmentTree seg(b);
-	vector<int> prefix_b(n);
+	vector<int> prefix_a(n), prefix_b(n);
+	prefix_a[0] = a[0];
+	for (int i = 1; i < n; i++) {
+		prefix_a[i] = prefix_a[i - 1] + a[i];
+	}
 	prefix_b[0] = b[0];
 	for (int i = 1; i < n; i++) {
 		prefix_b[i] = prefix_b[i - 1] + b[i];
 	}
-	if (a[0] > m) {
-		cout << -1 << "\n";
-		return;
-	}
 
-	int sum = 0, max_time_b = 0, i = 0;
-	while (i < n && sum <= m) {
-		sum += a[i];
-		i++;
-	}
-	if (i < n)
-		sum -= a[i];
-	i--;
-	for (int x = 0; x <= i; x++)
-		max_time_b += b[x];
-	max_time_b--;
-	int diff = m - max_time_b;
-	if (diff <= 0) {
-		cout << 0 << "\n";
-		return;
-	}
+	int i = upper_bound(prefix_a.begin(), prefix_a.end(), m) - prefix_a.begin() - 1;
 
-	i = 0;
-	int cnt = 0;
-	int l = 0;
-	int time_b = m;
-	int r = upper_bound(prefix_b.begin(), prefix_b.end(), time_b) - prefix_b.begin() - 1;
-	if (r == -1) {
-		cout << 0 << "\n";
-		return;
-	}
-	vector<int> res;
-	int additional_time = 0;
+	SegmentTree seg(b);
 	auto orig_b = b;
-	while (i < n && l <= r && m > 0) {
-		int delta = min(m, min(a[i], b[l]));
-		m -= delta;
-		a[i] -= delta;
-		if (a[i] == 0) {
-			cnt++;
-			i++;
-		}
-
-		r = upper_bound(prefix_b.begin(), prefix_b.end(), time_b) - prefix_b.begin() - 1;
+	int cur_t = 0, mx_t = m;
+	int l = 0, r = upper_bound(prefix_b.begin(), prefix_b.end(), mx_t) - prefix_b.begin() - 1;
+	int used = 0;
+	vector<int> res;
+	while (l <= r && cur_t < m) {
+		int delta = min(m - cur_t, b[l]);
+		cur_t += delta;
 		b[l] -= delta;
-		if (b[l] == 0 && cnt > 0) {
-			int mx = seg.get(l, r);
-			if (mx == orig_b[l]) {
-				time_b -= mx * cnt;
-				diff -= mx * cnt;
-				for (int x = 0; x < cnt; x++)
-					res.push_back(prefix_b[l] + additional_time);
-				additional_time += mx * cnt;
-				cnt = 0;
-			}
-			b[l] += mx * cnt;
+
+		int cnt = upper_bound(prefix_a.begin(), prefix_a.end(), cur_t) - prefix_a.begin() - used;
+		int mx = seg.get(l, min(r, i));
+		if (cnt > 0 && mx == orig_b[l]) {
+			b[l] += mx;
+			mx_t -= mx;
+			res.push_back(cur_t);
+			used++;
+			r = upper_bound(prefix_b.begin(), prefix_b.end(), mx_t) - prefix_b.begin() - 1;
 		}
 		if (b[l] == 0) {
 			l++;
 		}
 	}
-	assert(cnt == 0);
-	if (diff > 0) {
-		cout << -1 << "\n";
-		return;
-	}
-	cout << res.size() << "\n";
-	for (auto x : res)
-		cout << x << " ";
+	if (i <= r)
+		return { false, {} };
+	return make_pair(true, res);
 }
 
 signed main()
@@ -145,5 +112,13 @@ signed main()
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	solve();
+	auto [ok, res] = solve();
+	if (!ok)
+		cout << -1 << "\n";
+	else {
+		cout << res.size() << "\n";
+		for (auto x : res)
+			cout << x << " ";
+		cout << "\n";
+	}
 }

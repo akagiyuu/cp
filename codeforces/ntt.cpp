@@ -4,6 +4,7 @@
 using namespace std;
 
 #define int long long
+
 const int MOD = 998244353;
 const int ROOT = 3;
 
@@ -71,25 +72,12 @@ void fft(vector<int> &a, bool invert)
 	}
 }
 
-vector<int> to_poly(string s)
-{
-	int n = s.size();
-	vector<int> res(n);
-	for (int i = 0; i < n; i++) {
-		res[i] = s[n - 1 - i] - '0';
-	}
-	if (s[0] == '-')
-		res.pop_back();
-	return res;
-}
-
 void multiply(vector<int> &a, vector<int> &b)
 {
 	int need = a.size() + b.size() - 1;
 	int sz = 1;
 	while (sz < need)
 		sz <<= 1;
-
 	a.resize(sz);
 	b.resize(sz);
 
@@ -98,35 +86,27 @@ void multiply(vector<int> &a, vector<int> &b)
 	for (int i = 0; i < sz; i++)
 		a[i] = a[i] * b[i] % MOD;
 	fft(a, true);
+
+	a.resize(need);
 }
 
 void solve()
 {
-	string na, nb;
-	cin >> na >> nb;
-	if (na == "0" || nb == "0") {
-		cout << 0 << "\n";
-		return;
-	}
-	bool is_negative = (na[0] == '-') ^ (nb[0] == '-');
-	auto pa = to_poly(na);
-	auto pb = to_poly(nb);
-	multiply(pa, pb);
-	while (!pa.empty() && pa.back() == 0)
-		pa.pop_back();
-	int n = pa.size();
-	int remain = 0;
-	for (int i = 0; i < n; i++) {
-		pa[i] += remain;
-		remain = pa[i] / 10;
-		pa[i] %= 10;
-	}
-	if (is_negative)
-		cout << "-";
-	if (remain > 0)
-		cout << remain;
-	for (int i = n - 1; i >= 0; i--)
-		cout << pa[i];
+	int n;
+	cin >> n;
+	vector<int> a(n);
+	for (int i = 0; i < n; i++)
+		cin >> a[i];
+
+	int m;
+	cin >> m;
+	vector<int> b(m);
+	for (int i = 0; i < m; i++)
+		cin >> b[i];
+
+	multiply(a, b);
+	for (auto x : a)
+		cout << x << " ";
 	cout << "\n";
 }
 

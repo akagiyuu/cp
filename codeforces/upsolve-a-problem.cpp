@@ -71,12 +71,8 @@ void fft(vector<int> &a, bool invert)
 			x = x * mul % MOD;
 	}
 }
-inline void norm(vector<int> &a)
-{
-	while (!a.empty() && a.back() == 0)
-		a.pop_back();
-}
-vector<int> multiply(vector<int> a, vector<int> b, int need)
+
+void multiply(vector<int> &a, vector<int> b)
 {
 	int n = a.size() + b.size() - 1;
 	int sz = 1;
@@ -89,30 +85,27 @@ vector<int> multiply(vector<int> a, vector<int> b, int need)
 	for (int i = 0; i < sz; i++)
 		a[i] = a[i] * b[i] % MOD;
 	fft(a, true);
-	a.resize(need, 0);
-	return a;
 }
-vector<int> invert(vector<int> a, int n)
+void cdq_fft(int left, int right, vector<int> &dp, const vector<int> &c, const vector<int> &r)
 {
-	norm(a);
-	assert(!a.empty() && a[0] != 0);
-	vector<int> r = { inv(a[0]) };
-	int cur = 1;
-	while (cur < n) {
-		int need = min(cur * 2, n);
-		auto pr = multiply(a, r, need);
-		for (int i = 0; i < need; i++)
-			pr[i] = sub(0, pr[i]);
-		pr[0] = add(pr[0], 2);
-		r = multiply(r, pr, need);
-		norm(r);
-		cur = need;
+	if (left >= right)
+		return;
+	if (left + 1 == right) {
+		dp[left] = add(dp[left], c[left]);
+		return;
 	}
-	r.resize(n);
-	norm(r);
-	return r;
-}
 
+	int mid = (left + right) / 2;
+	cdq_fft(left, mid, dp, c, r);
+	vector<int> p(mid - left);
+	for (int i = left; i < mid; i++)
+		p[i - left] = dp[i];
+	multiply(p, r);
+	for (int i = mid; i < right; i++) {
+		dp[i] = add(dp[i], p[i - left]);
+	}
+	cdq_fft(mid, right, dp, c, r);
+}
 void solve()
 {
 	int n;
@@ -122,15 +115,9 @@ void solve()
 		cin >> c[i];
 	for (int i = 0; i < n; i++)
 		cin >> r[i];
-
-	r[0] = r[0] * 2 % MOD;
-	for (int i = 0; i < n; i++)
-		r[i] = sub(0, r[i]);
-	r[0] = add(r[0], 1);
-
-	r = invert(r, n);
-	auto res = multiply(c, r, n);
-	for (auto x : res)
+	vector<int> dp(n, 0);
+	cdq_fft(0, n, dp, c, r);
+	for (auto x : dp)
 		cout << x << " ";
 	cout << "\n";
 }

@@ -74,7 +74,7 @@ int interpolate(int x, const vector<int> &ys, const vector<int> &dp)
 
 vector<int> ys_a, dp_a, ys_b, dp_b;
 
-int calc_0(int x1, int x2, int y1, int y2, bool invert)
+int calc_1(int x1, int x2, int y1, int y2, bool invert)
 {
 	if (x1 > x2 || y1 > y2)
 		return 0;
@@ -83,45 +83,56 @@ int calc_0(int x1, int x2, int y1, int y2, bool invert)
 		swap(x2, y2);
 	}
 	int x = sub(interpolate(x2 + 1, ys_a, dp_a), interpolate(x1, ys_a, dp_a));
-	int y = sub(interpolate(y2, ys_b, dp_b), interpolate(y1, ys_b, dp_b));
+	int y = sub(interpolate(y2 + 1, ys_b, dp_b), interpolate(y1, ys_b, dp_b));
 	return x * y % MOD;
 }
-
-int calc(int x1, int x4, int y1, int y4, int n)
+int pre_2(int x, int y, int n)
 {
-	if (x1 > x4 || y1 > y4)
+	if (x < 0 || y < 0)
 		return 0;
-	int x2 = (x1 + n - 1) / n;
-	int x3 = x4 / n;
-	int cnt_x = min(0ll, x3 - x2) / n;
+	x = min(x, 2 * n - 1);
+	y = min(y, 2 * n - 1);
 
-	int y2 = (y1 + n - 1) / n;
-	int y3 = y4 / n;
-	int cnt_y = min(0ll, y3 - y2) / n;
+	int res = 0;
+	res = add(res, calc_1(0, min(n - 1, x), 0, min(n - 1, y), false));
+	if (x >= n)
+		res = add(res, calc_1(0, x - n, 0, min(n - 1, y), true));
+	if (y >= n)
+		res = add(res, calc_1(0, min(n - 1, x), 0, y - n, true));
+	if (x >= n && y >= n)
+		res = add(res, calc_1(0, x - n, 0, y - n, false));
+	return res;
+}
+int calc_2(int x1, int x2, int y1, int y2, int n)
+{
+	int res = pre_2(x2, y2, n);
+	if (x1 > 0)
+		res = sub(res, pre_2(x1 - 1, y2, n));
+	if (y1 > 0)
+		res = sub(res, pre_2(x2, y1 - 1, n));
+	if (x1 > 0 && y1 > 0)
+		res = add(res, pre_2(x1 - 1, y1 - 1, n));
+	return res;
+}
+int pre_k(int x, int y, int n)
+{
+	if (x < 0 || y < 0)
+		return 0;
+	int m = 2 * n;
 
-	if (cnt_x >= 1 && cnt_y >= 1) {
-		int full = calc(1, n, 1, n, false);
-		int res = full * cnt_x % MOD * cnt_y % MOD;
+	int cnt_x = (x + 1) / m;
+	int cnt_y = (y + 1) / m;
+	int rem_x = (x + 1) % m;
+	int rem_y = (y + 1) % m;
 
-		res = add(res, calc(x1, x4, y1, y2 - 1, n));
-		res = add(res, calc(x1, x4, y3, y4, n));
-		res = add(res, calc(x1, x2 - 1, y1, y4, n));
-		res = add(res, calc(x3, x4, y1, y4, n));
+	int full = pre_2(m - 1, m - 1, n);
 
-		res = sub(res, calc(x1, x2 - 1, y1, y2 - 1, n));
-		res = sub(res, calc(x1, x2 - 1, y3, y4, n));
-		res = sub(res, calc(x3, x4, y1, y2 - 1, n));
-		res = sub(res, calc(x3, x4, y3, y4, n));
-		return res;
-	}
-	if (cnt_x >= 1) {
-		int res = add(calc(x1, x2 - 1, y1, y4, n), calc(x3 + 1, x4, y1, y4, n));
-		return res;
-	}
-	if (cnt_y >= 1) {
-		int res = add(calc(x1, x4, y1, y2 - 1, n), calc(x1, x4, y3 + 1, y4, n));
-		return res;
-	}
+	int res = full * (cnt_x % MOD) % MOD * (cnt_y % MOD) % MOD;
+	res = add(res, pre_2(rem_x - 1, m - 1, n) * (cnt_y % MOD) % MOD);
+	res = add(res, pre_2(m - 1, rem_y - 1, n) * (cnt_x % MOD) % MOD);
+	res = add(res, pre_2(rem_x - 1, rem_y - 1, n));
+
+	return res;
 }
 
 void solve()
@@ -131,13 +142,21 @@ void solve()
 	tie(ys_a, dp_a) = build_lagrange(a);
 	tie(ys_b, dp_b) = build_lagrange(b);
 
-	int x1, x2, y1, y2;
-	cin >> x1 >> x2 >> y1 >> y2;
-	x1--;
-	x2--;
-	y1--;
-	y2--;
-	cout << calc(x1, x2, y1, y2, n) << '\n';
+	int u, v, x, y;
+	cin >> u >> v >> x >> y;
+	u--;
+	v--;
+	x--;
+	y--;
+
+	int res = pre_k(x, y, n);
+	if (u > 0)
+		res = sub(res, pre_k(u - 1, y, n));
+	if (v > 0)
+		res = sub(res, pre_k(x, v - 1, n));
+	if (u > 0 && v > 0)
+		res = add(res, pre_k(u - 1, v - 1, n));
+	cout << res << '\n';
 }
 
 signed main()

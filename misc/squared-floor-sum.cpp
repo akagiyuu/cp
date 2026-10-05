@@ -35,6 +35,10 @@ mint operator-(mint x, mint y)
 		x.n += MOD;
 	return x;
 }
+mint operator-(mint x, int y)
+{
+	return x - mint(y);
+}
 mint operator*(mint x, mint y)
 {
 	return mint(x.n * y.n);
@@ -100,10 +104,9 @@ vector<mint> squared_floor_sum(int a, int b, int c, int _n)
 	auto r1 = m * n * (n + 1) / 2;
 	r1 = r1 - (prev[2] + prev[0]) / 2;
 
-	auto r2 = n * m * (m + 1);
-	r2 = r2 - 2 * prev[0];
+	auto r2 = n * m * (m - 1);
 	r2 = r2 - 2 * prev[1];
-	r2 = r2 - r0;
+	r2 = r2 + r0;
 
 	return { r0, r1, r2 };
 }

@@ -47,7 +47,7 @@ void solve()
 		} else {
 			int k;
 			cin >> k;
-			int g = gcd(k, m);
+			int g = __gcd(k, m);
 			if (cnt[g] < m / g)
 				cout << "YES\n";
 			else

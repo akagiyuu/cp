@@ -2,10 +2,6 @@
 
 using namespace std;
 
-#define int long long
-
-const int MOD = 1000000007;
-
 void solve()
 {
 	int n, m, q;
@@ -14,14 +10,19 @@ void solve()
 	for (int i = 0; i < n; i++)
 		cin >> a[i];
 	vector<int> cnt(m + 1, 0);
+	vector<int> divisor;
 	for (int d1 = 1; d1 * d1 <= m; d1++) {
 		if (m % d1 != 0)
 			continue;
 		int d2 = m / d1;
+		divisor.push_back(d1);
+		if (d1 != d2)
+			divisor.push_back(d2);
+	}
+
+	for (auto d : divisor) {
 		for (int i = 1; i < n; i++) {
-			cnt[d1] += (a[i] % d1) < (a[i - 1] % d1);
-			if (d1 != d2)
-				cnt[d2] += (a[i] % d2) < (a[i - 1] % d2);
+			cnt[d] += (a[i] % d) < (a[i - 1] % d);
 		}
 	}
 	while (q--) {
@@ -31,7 +32,7 @@ void solve()
 			int i, x;
 			cin >> i >> x;
 			i--;
-			auto update = [&](int d) {
+			for (auto d : divisor) {
 				if (i > 0) {
 					cnt[d] -= (a[i] % d) < (a[i - 1] % d);
 					cnt[d] += (x % d) < (a[i - 1] % d);
@@ -41,14 +42,6 @@ void solve()
 					cnt[d] -= (a[i + 1] % d) < (a[i] % d);
 					cnt[d] += (a[i + 1] % d) < (x % d);
 				}
-			};
-			for (int d1 = 1; d1 * d1 <= m; d1++) {
-				if (m % d1 != 0)
-					continue;
-				int d2 = m / d1;
-				update(d1);
-				if (d1 != d2)
-					update(d2);
 			}
 			a[i] = x;
 		} else {

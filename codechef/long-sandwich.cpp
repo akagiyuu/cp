@@ -5,26 +5,25 @@
 using namespace std;
 
 const int N = 1e6 + 1;
-int last_prime = -1;
 int fact[N] = { 1 };
-int fact_filled = 0;
 
-// fast exponentiation modulo
-int mod_pow(int a, int e, int mod)
+int normalize(int x, int m)
 {
-	a %= mod;
+	x %= m;
+	return x >= 0 ? x : x + m;
+}
+int powmod(int x, int e, int m)
+{
 	int r = 1;
 	while (e) {
 		if (e & 1)
-			r = r * a % mod;
-		a = a * a % mod;
+			r = r * x % m;
+		x = x * x % m;
 		e >>= 1;
 	}
 	return r;
 }
-
-// extended gcd: returns (g,x,y) such that ax+by=g
-int gcd(int a, int b, int &x, int &y)
+int ext_gcd(int a, int b, int &x, int &y)
 {
 	x = 1, y = 0;
 	int x1 = 0, y1 = 1;
@@ -36,80 +35,71 @@ int gcd(int a, int b, int &x, int &y)
 	}
 	return a;
 }
-
-// modular inverse
-int mod_inv(int a, int mod)
+int inverse(int a, int m)
 {
-	a %= mod;
-	if (a < 0)
-		a += mod;
+	a = normalize(a, m);
 	int x, y;
-	int g = gcd(a, mod, x, y);
+	int g = ext_gcd(a, m, x, y);
 	if (g != 1)
 		return -1;
-	x %= mod;
-	if (x < 0)
-		x += mod;
-	return x;
+	return normalize(x, m);
 }
-
-// ensure factorial cache modulo p
-void ensure_fact(int n, int p)
+void build_fact(int p)
 {
-	if (p != last_prime) {
-		fill(fact, fact + N, 1);
-		fact_filled = 0;
-		last_prime = p;
-	}
-	n = min(n, N);
-	for (int i = fact_filled + 1; i <= n; i++)
+	for (int i = 1; i < N; i++)
 		fact[i] = fact[i - 1] * i % p;
-	fact_filled = max(fact_filled, n);
 }
 
-int nCk_prime(int n, int k, int p) {
-	if (k < 0 || k > n) return 0;
-	ensure_fact(n, p);
-	int num = fact[n];
-	int den = fact[k] * fact[n - k] % p;
-	int inv_den = mod_inv(den, p);
-	if (inv_den == -1) return 0;
-	return num * inv_den % p;
+int C_prime(int n, int k, int p)
+{
+	if (k < 0 || k > n)
+		return 0;
+	return fact[n] * inverse(fact[n - k] * fact[k] % p, p) % p;
 }
-int nCk_lucas(int n, int k, int p) {
-	if (k < 0 || k > n) return 0;
+int C_lucas(int n, int k, int p)
+{
+	if (k < 0 || k > n)
+		return 0;
+	build_fact(p);
 	int res = 1;
 	while (n || k) {
 		int ni = n % p, ki = k % p;
-		if (ki > ni) return 0;
-		res = res * nCk_prime(ni, ki, p) % p;
+		if (ki > ni)
+			return 0;
+		res = res * C_prime(ni, ki, p) % p;
 		n /= p;
 		k /= p;
 	}
 	return res;
 }
-int factorial_p_exp(int n, int p) {
+int factorial_p_exp(int n, int p)
+{
 	int cnt = 0;
-	for (int q = p; q <= n; q *= p) cnt += n / q;
+	for (int q = p; q <= n; q *= p)
+		cnt += n / q;
 	return cnt;
 }
 
-int nCk_prime_power(int n, int k, int p, int p_pow, int power_count) {
-	if (k < 0 || k > n) return 0;
+int C_prime_pow(int n, int k, int p, int p_pow, int power_count)
+{
+	if (k < 0 || k > n)
+		return 0;
 	int exp = factorial_p_exp(n, p) - factorial_p_exp(k, p) - factorial_p_exp(n - k, p);
-	if (exp >= power_count) return 0;
+	if (exp >= power_count)
+		return 0;
 
 	vector<int> f(p_pow + 1, 1);
 	for (int i = 1; i <= p_pow; i++) {
 		f[i] = f[i - 1];
-		if (gcd(i, p) == 1)
+		if (__gcd(i, p) == 1)
 			f[i] = f[i] * i % p_pow;
 	}
 
 	auto calc_f = [&](int x) {
 		int r = 1;
-		if (x == 0) return 1LL;
-		r = mod_pow(f[p_pow], x / p_pow, p_pow);
+		if (x == 0)
+			return 1LL;
+		r = powmod(f[p_pow], x / p_pow, p_pow);
 		r = r * f[x % p_pow] % p_pow;
 		return r;
 	};
@@ -122,52 +112,58 @@ int nCk_prime_power(int n, int k, int p, int p_pow, int power_count) {
 	};
 
 	int gn = calc_g(n), gk = calc_g(k), gnk = calc_g(n - k);
-	int denom = gk * gnk % p_pow;
-	int inv_denom = mod_inv(denom, p_pow);
-	if (inv_denom == -1) return 0;
-
-	int res = gn * inv_denom % p_pow;
-	res = res * mod_pow(p, exp, p_pow) % p_pow;
-	return res;
+	int res = gn * inverse(gnk * gk % p_pow, p_pow) % p_pow;
+	return res * powmod(p, exp, p_pow) % p_pow;
 }
-int nCk(int n, int k, int m) {
-	if (k < 0 || k > n) return 0;
-	if (m == 1) return 0;
-	int M = m, res = 0;
+pair<int, int> crt(const vector<int> &r, const vector<int> &m)
+{
+	int r0 = 0, m0 = 1;
+	for (int i = 0; i < (int)r.size(); i++) {
+		int r1 = r[i] % m[i], m1 = m[i];
+		if (r1 < 0)
+			r1 += m1;
+		int x, y;
+		int g = ext_gcd(m0, m1, x, y);
+		if ((r1 - r0) % g != 0)
+			return { -1, 0 };
+		int lcm = m0 / g * m1;
+		int tmp = (r1 - r0) / g % (m1 / g) * x % (m1 / g);
+		r0 = (r0 + m0 * tmp) % lcm;
+		if (r0 < 0)
+			r0 += lcm;
+		m0 = lcm;
+	}
+	return { r0, m0 };
+}
+int C(int n, int k, int m)
+{
+	if (k < 0 || k > n)
+		return 0;
+	if (m == 1)
+		return 0;
 
+	vector<int> rs, ms;
 	for (int p = 2; p * p <= m; p++) {
-		if (m % p != 0) continue;
+		if (m % p != 0)
+			continue;
 		int p_pow = 1, cnt = 0;
 		while (m % p == 0) {
 			p_pow *= p;
 			m /= p;
 			cnt++;
 		}
-		int r = (p_pow == p) ? nCk_lucas(n, k, p) : nCk_prime_power(n, k, p, p_pow, cnt);
-		if (r == 0) continue;
-		int Mi = M / p_pow;
-		int inv = mod_inv(Mi % p_pow, p_pow);
-		if (inv == -1) continue;
-		int term = r * inv % p_pow;
-		term = term * Mi % M;
-		res = (res + term) % M;
+		int r = (p_pow == p) ? C_lucas(n, k, p) : C_prime_pow(n, k, p, p_pow, cnt);
+		rs.push_back(r);
+		ms.push_back(p_pow);
 	}
-
 	if (m > 1) {
 		int p = m;
-		int r = nCk_lucas(n, k, p);
-		if (r > 0) {
-			int Mi = M / p;
-			int inv = mod_inv(Mi % p, p);
-			if (inv != -1) {
-				int term = r * inv % p;
-				term = term * Mi % M;
-				res = (res + term) % M;
-			}
-		}
+		int r = C_lucas(n, k, p);
+		rs.push_back(r);
+		ms.push_back(p);
 	}
 
-	return (res % M + M) % M;
+	return crt(rs, ms).first;
 }
 
 void solve()
@@ -176,7 +172,7 @@ void solve()
 	cin >> n >> k >> m;
 	int count = (n - 1) / k + 1;
 	cout << count << " ";
-	int res = nCk(count * k - n + count - 1, count - 1, m);
+	int res = C(count * k - n + count - 1, count - 1, m);
 	cout << res << "\n";
 }
 

@@ -74,26 +74,69 @@ void fft(vector<int> &a, bool invert)
 	}
 }
 
-vector<int> multiply(const vector<int> &a, const vector<int> &b)
+void multiply(vector<int> &a, vector<int> &b)
 {
 	int n = a.size();
-	int m = a.size();
+	int m = b.size();
 
 	int N = n + m - 1;
 	int sz = 1;
 	while (sz < N)
 		sz <<= 1;
-	vector<int> fa(sz, 0), fb(sz, 0);
-	for (int i = 0; i < n; i++)
-		fa[i] = a[i];
-	for (int i = 0; i < m; i++)
-		fb[i] = b[i];
-	fft(fa, false);
-	fft(fb, false);
+	a.resize(sz);
+	b.resize(sz);
+	fft(a, false);
+	fft(b, false);
 	for (int i = 0; i < sz; i++)
-		fa[i] = fa[i] * fb[i] % MOD;
-	fft(fa, true);
-	return fa;
+		a[i] = a[i] * b[i] % MOD;
+	fft(a, true);
+}
+
+void cdq_g(int l, int r, vector<int> &g, const vector<int> &fact, const vector<int> &conv_fact)
+{
+	if (l >= r)
+		return;
+	if (l == r - 1) {
+		g[l] = add(g[l], sub(conv_fact[l], 2 * fact[l] % MOD));
+		return;
+	}
+	int mid = (l + r) / 2;
+
+	cdq_g(l, mid, g, fact, conv_fact);
+
+	vector<int> p(g.begin() + l, g.begin() + mid);
+	vector<int> fact_clone(fact.begin(), fact.begin() + (r - l));
+	multiply(p, fact_clone);
+
+	for (int i = mid; i < r; i++)
+		g[i] = sub(g[i], p[i - l]);
+
+	cdq_g(mid, r, g, fact, conv_fact);
+}
+
+void cdq_f(int l, int r, vector<int> &f, const vector<int> &fact, const vector<int> &conv_fact, const vector<int> &g)
+{
+	if (l >= r)
+		return;
+	if (l == r - 1) {
+		f[l] = add(f[l], fact[l]) * inverse(g[l]) % MOD;
+		return;
+	}
+
+	int mid = (l + r) / 2;
+
+	cdq_f(l, mid, f, fact, conv_fact, g);
+
+	vector<int> p(mid - l);
+	for (int i = l; i < mid; i++)
+		p[i - l] = sub(fact[i], g[i]) * f[i] % MOD;
+	vector<int> conv_fact_clone(conv_fact.begin(), conv_fact.begin() + (r - l));
+	multiply(p, conv_fact_clone);
+
+	for (int i = mid; i < r; i++)
+		f[i] = add(f[i], p[i - l]);
+
+	cdq_f(mid, r, f, fact, conv_fact, g);
 }
 
 void solve()
@@ -110,28 +153,29 @@ void solve()
 	fact[0] = 1;
 	for (int i = 1; i <= n; i++)
 		fact[i] = fact[i - 1] * i % MOD;
-	auto conv_fact = multiply(fact, fact);
-	conv_fact.resize(n + 1);
+	auto conv_fact = fact, tmp = fact;
+	multiply(conv_fact, tmp);
 
-	vector<int> f(n + 1, 0), g(n + 1, 0);
-	f[1] = 1;
-	g[1] = 0;
-	for (int i = 2; i <= n; i++) {
-		for (int j = i - 1; j >= 1; j--)
-			g[i] = add(g[i], f[j] * add(g[i - j], f[i - j]) % MOD);
+	vector<int> g(n + 1, 0);
+	cdq_g(2, n + 1, g, fact, conv_fact);
+	// for (int i = 2; i <= n; i++) {
+	// 	g[i] = sub(conv_fact[i], 2 * fact[i] % MOD);
+	// 	for (int j = 0; j <= i - 1; j++)
+	// 		g[i] = sub(g[i], g[j] * fact[i - j] % MOD);
+	// }
 
-		f[i] = sub(fact[i], g[i]);
-	}
-	vector<int> h(n + 1, 0);
-	for (int i = 2; i <= n; i++) {
-		int x = 0;
-		for (int s = 1; s < i; s++) {
-			int y = conv_fact[i - s] * f[s] % MOD * h[s] % MOD;
-			x = add(x, y);
-		}
-		x = add(x, fact[i]);
-		x = x * inverse(sub(fact[i], f[i])) % MOD;
-	}
+	vector<int> f(n + 1, 0);
+	cdq_f(2, n + 1, f, fact, conv_fact, g);
+	// for (int i = 2; i <= n; i++) {
+	// 	int x = 0;
+	// 	for (int s = 0; s <= i - 1; s++) {
+	// 		int y = conv_fact[i - s] * sub(fact[s], g[s]) % MOD * f[s] % MOD;
+	// 		x = add(x, y);
+	// 	}
+	// 	x = add(x, fact[i]);
+	// 	x = x * inverse(g[i]) % MOD;
+	// 	f[i] = x;
+	// }
 
 	int cnt = 0;
 	int start = 0;
@@ -145,7 +189,7 @@ void solve()
 			mx = -1;
 			continue;
 		}
-		cnt = add(cnt, h[i - start + 1]);
+		cnt = add(cnt, f[i - start + 1]);
 		start = i + 1;
 		mx = -1;
 	}

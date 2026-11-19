@@ -4,130 +4,120 @@ using namespace std;
 
 #define int long long
 
+const int N = 1e5 + 7;
+
 struct SegTree {
 	int n;
-	vector<double> tree, lazy_mul, lazy_add;
+	double a[N], sum[4 * N], lzM[4 * N], lzA[4 * N];
 
-	SegTree(const vector<double> &a)
+	void apply(int k, int len, double m, double b)
 	{
-		n = a.size();
-		tree.assign(4 * n, 0);
-		lazy_mul.assign(4 * n, 1);
-		lazy_add.assign(4 * n, 0);
-		build(1, 0, n - 1, a);
+		sum[k] = sum[k] * m + b * len;
+		lzM[k] = lzM[k] * m;
+		lzA[k] = lzA[k] * m + b;
 	}
 
-	void build(int id, int tl, int tr, const vector<double> &a)
+	void push(int k, int l, int r)
 	{
-		if (tl == tr) {
-			tree[id] = a[tl];
+		int mid = (l + r) / 2;
+		apply(2 * k, mid - l + 1, lzM[k], lzA[k]);
+		apply(2 * k + 1, r - mid, lzM[k], lzA[k]);
+		lzM[k] = 1;
+		lzA[k] = 0;
+	}
+
+	void build(int k, int l, int r)
+	{
+		lzM[k] = 1;
+		lzA[k] = 0;
+		if (l == r) {
+			sum[k] = a[l];
 			return;
 		}
-		int tmid = (tl + tr) / 2;
-		build(2 * id, tl, tmid, a);
-		build(2 * id + 1, tmid + 1, tr, a);
-		tree[id] = tree[2 * id] + tree[2 * id + 1];
+		int mid = (l + r) / 2;
+		build(2 * k, l, mid);
+		build(2 * k + 1, mid + 1, r);
+		sum[k] = sum[2 * k] + sum[2 * k + 1];
 	}
 
-	void apply(int id, int tl, int tr, double a, double b)
+	void update(int k, int l, int r, int ql, int qr, double m, double b)
 	{
-		tree[id] = a * tree[id] + b * (tr - tl + 1);
-		lazy_mul[id] = a * lazy_mul[id];
-		lazy_add[id] = a * lazy_add[id] + b;
-	}
-
-	void push(int id, int tl, int tr)
-	{
-		if (tl == tr)
-			return;
-
-		int tmid = (tl + tr) / 2;
-		apply(2 * id, tl, tmid, lazy_mul[id], lazy_add[id]);
-		apply(2 * id + 1, tmid + 1, tr, lazy_mul[id], lazy_add[id]);
-
-		lazy_mul[id] = 1;
-		lazy_add[id] = 0;
-	}
-
-	double get(int id, int tl, int tr, int l, int r)
-	{
-		if (l > r)
-			return 0;
-		if (tl == l && tr == r)
-			return tree[id];
-
-		push(id, tl, tr);
-
-		int tmid = (tl + tr) / 2;
-		double x = get(2 * id, tl, tmid, l, min(r, tmid));
-		double y = get(2 * id + 1, tmid + 1, tr, max(l, tmid + 1), r);
-		return x + y;
-	}
-
-	double get(int l, int r)
-	{
-		return get(1, 0, n - 1, l, r);
-	}
-
-	void update(int id, int tl, int tr, int l, int r, double a, double b)
-	{
-		if (l > r)
-			return;
-		if (tl == l && tr == r) {
-			apply(id, tl, tr, a, b);
+		if (ql <= l && r <= qr) {
+			apply(k, r - l + 1, m, b);
 			return;
 		}
-
-		push(id, tl, tr);
-
-		int tmid = (tl + tr) / 2;
-		update(2 * id, tl, tmid, l, min(r, tmid), a, b);
-		update(2 * id + 1, tmid + 1, tr, max(l, tmid + 1), r, a, b);
-
-		tree[id] = tree[2 * id] + tree[2 * id + 1];
+		push(k, l, r);
+		int mid = (l + r) / 2;
+		if (ql <= mid)
+			update(2 * k, l, mid, ql, qr, m, b);
+		if (qr > mid)
+			update(2 * k + 1, mid + 1, r, ql, qr, m, b);
+		sum[k] = sum[2 * k] + sum[2 * k + 1];
 	}
 
-	void update(int l, int r, double a, double b)
+	double query(int k, int l, int r, int ql, int qr)
 	{
-		update(1, 0, n - 1, l, r, a, b);
+		if (ql <= l && r <= qr)
+			return sum[k];
+		push(k, l, r);
+		int mid = (l + r) / 2;
+		double res = 0;
+		if (ql <= mid)
+			res += query(2 * k, l, mid, ql, qr);
+		if (qr > mid)
+			res += query(2 * k + 1, mid + 1, r, ql, qr);
+		return res;
+	}
+
+	void init(int n_, const vector<double> &v)
+	{
+		n = n_;
+		for (int i = 1; i <= n; i++)
+			a[i] = v[i];
+		build(1, 1, n);
+	}
+
+	void update(int l, int r, double A, double B)
+	{
+		update(1, 1, n, l, r, A, B);
+	}
+
+	double query(int l, int r)
+	{
+		return query(1, 1, n, l, r);
 	}
 };
 
+SegTree t;
 void solve()
 {
 	int n, q;
 	cin >> n >> q;
-	vector<double> a(n);
-	for (int i = 0; i < n; i++) {
+	vector<double> a(n + 1);
+	for (int i = 1; i <= n; i++) {
 		int x;
 		cin >> x;
 		a[i] = x;
 	}
-	SegTree t(a);
+	t.init(n, a);
 	while (q--) {
 		int type;
 		cin >> type;
 		if (type == 1) {
 			int l1, r1, l2, r2;
 			cin >> l1 >> r1 >> l2 >> r2;
-			l1--;
-			r1--;
-			l2--;
-			r2--;
 
 			double s1 = r1 - l1 + 1;
 			double s2 = r2 - l2 + 1;
-			double m1 = t.get(l1, r1) / s1;
-			double m2 = t.get(l2, r2) / s2;
+			double m1 = t.query(l1, r1) / s1;
+			double m2 = t.query(l2, r2) / s2;
 
-			t.update(l1, r1, 1 - 1. / s1, m2 / s1);
-			t.update(l2, r2, 1 - 1. / s2, m1 / s2);
+			t.update(l1, r1, (1 - 1. / s1), m2 / s1);
+			t.update(l2, r2, (1 - 1. / s2), m1 / s2);
 		} else {
 			int l, r;
 			cin >> l >> r;
-			l--;
-			r--;
-			double res = t.get(l, r);
+			double res = t.query(l, r);
 			cout << fixed << setprecision(10) << res << '\n';
 		}
 	}
